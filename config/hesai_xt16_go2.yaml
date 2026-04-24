@@ -1,0 +1,46 @@
+/**:
+    ros__parameters:
+        feature_extract_enable: false
+        point_filter_num: 1
+        max_iteration: 5
+        filter_size_surf: 0.1
+        filter_size_map: 0.3
+        cube_side_length: 200.0
+        runtime_pos_log_enable: false
+        map_file_path: "./fast_lio_go2.pcd"
+
+        common:
+            lid_topic:  "/lidar_points"
+            imu_topic:  "/imu/filtered"
+            time_sync_en: false
+            time_offset_lidar_to_imu: 0.131284  # from LI_Init calibration (Dec 11)
+
+        preprocess:
+            lidar_type: 5        # HESAI — native Hesai handler (reads double timestamp field)
+            scan_line: 16
+            scan_rate: 10
+            timestamp_unit: 0    # 0=seconds (Hesai uses float seconds per point)
+            blind: 0.5
+
+        mapping:
+            acc_cov: 0.5
+            gyr_cov: 0.01
+            b_acc_cov: 0.0001
+            b_gyr_cov: 0.0001
+            fov_degree:    360.0
+            det_range:     60.0
+            extrinsic_est_en: false   # fixed extrinsics — required for valid proxy test
+            extrinsic_T: [ 0.162886, 0.072124, 0.090100 ]
+            extrinsic_R: [ 0.999929,  0.006551, -0.009959,
+                          -0.006512,  0.999971,  0.003964,
+                           0.009985, -0.003899,  0.999943 ]
+
+        publish:
+            path_en:  true
+            scan_publish_en:  true
+            dense_publish_en: true
+            scan_bodyframe_pub_en: true
+
+        pcd_save:
+            pcd_save_en: false
+            interval: -1

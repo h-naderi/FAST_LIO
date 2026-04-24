@@ -85,6 +85,10 @@ void Preprocess::process(const sensor_msgs::msg::PointCloud2::UniquePtr &msg, Po
       mid360_handler(msg);
       break;
 
+    case HESAI:
+      hesai_handler(msg);
+      break;
+
     default:
       default_handler(msg);
       break;
@@ -468,6 +472,44 @@ void Preprocess::velodyne_handler(const sensor_msgs::msg::PointCloud2::UniquePtr
         {
           pl_surf.points.push_back(added_pt);
         }
+      }
+    }
+  }
+}
+
+void Preprocess::hesai_handler(const sensor_msgs::msg::PointCloud2::UniquePtr &msg)
+{
+  pl_surf.clear();
+  pl_corn.clear();
+  pl_full.clear();
+
+  pcl::PointCloud<hesai_ros::Point> pl_orig;
+  pcl::fromROSMsg(*msg, pl_orig);
+  int plsize = pl_orig.points.size();
+  if (plsize == 0)
+    return;
+  pl_surf.reserve(plsize);
+
+  double t0 = pl_orig.points[0].timestamp;  // absolute seconds — subtract to get relative offset
+
+  for (int i = 0; i < plsize; i++)
+  {
+    PointType added_pt;
+    added_pt.normal_x = 0;
+    added_pt.normal_y = 0;
+    added_pt.normal_z = 0;
+    added_pt.x = pl_orig.points[i].x;
+    added_pt.y = pl_orig.points[i].y;
+    added_pt.z = pl_orig.points[i].z;
+    added_pt.intensity = pl_orig.points[i].intensity;
+    // relative offset in ms for undistortion
+    added_pt.curvature = (pl_orig.points[i].timestamp - t0) * 1.0e3f;
+
+    if (i % point_filter_num == 0)
+    {
+      if (added_pt.x * added_pt.x + added_pt.y * added_pt.y + added_pt.z * added_pt.z > (blind * blind))
+      {
+        pl_surf.points.push_back(added_pt);
       }
     }
   }

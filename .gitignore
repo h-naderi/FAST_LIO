@@ -1,4 +1,5 @@
 build
+logs/
 Log/*.png
 Log/*.txt
 Log/*.csv
