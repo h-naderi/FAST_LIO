@@ -7,3 +7,9 @@ Log/*.pdf
 .vscode/c_cpp_properties.json
 .vscode/settings.json
 PCD/*.pcd
+
+# backups and Python bytecode
+*.bak
+*.qosbak
+*.pyc
+__pycache__/
