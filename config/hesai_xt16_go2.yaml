@@ -11,9 +11,9 @@
 
         common:
             lid_topic:  "/lidar_points"
-            imu_topic:  "/imu/filtered"
+            imu_topic:  "/imu/data"
             time_sync_en: false
-            time_offset_lidar_to_imu: 0.131284  # from LI_Init calibration (Dec 11)
+            time_offset_lidar_to_imu: -0.11  # 0.131284 from LI_Init calibration (Dec 11)
 
         preprocess:
             lidar_type: 5        # HESAI — native Hesai handler (reads double timestamp field)
@@ -30,15 +30,25 @@
             fov_degree:    360.0
             det_range:     60.0
             extrinsic_est_en: false   # fixed extrinsics — required for valid proxy test
-            extrinsic_T: [ 0.162886, 0.072124, 0.090100 ]
-            extrinsic_R: [ 0.999929,  0.006551, -0.009959,
-                          -0.006512,  0.999971,  0.003964,
-                           0.009985, -0.003899,  0.999943 ]
+            # Unitree factory figure: XT-16 origin in the Go2 body IMU frame,
+            # (0.1710, 0, 0.0908) with no relative rotation. From the supplied
+            # homogeneous transform (R = I, t = [0.171, 0, 0.0908]).
+            #
+            # Previous values (ulhk-inherited T + 0.7 deg R):
+            #   extrinsic_T: [ 0.162886, 0.072124, 0.090100 ]
+            #   extrinsic_R: [ 0.999929,  0.006551, -0.009959,
+            #                 -0.006512,  0.999971,  0.003964,
+            #                  0.009985, -0.003899,  0.999943 ]
+            # Delta: T -0.8 cm x, -7.2 cm y, +0.7 mm z; R -> identity (0.7 deg).
+            extrinsic_T: [ 0.171, 0.0, 0.0908 ]
+            extrinsic_R: [ 1.0, 0.0, 0.0,
+                           0.0, 1.0, 0.0,
+                           0.0, 0.0, 1.0 ]
 
         publish:
             path_en:  true
             scan_publish_en:  true
-            dense_publish_en: true
+            dense_publish_en: false
             scan_bodyframe_pub_en: true
 
         pcd_save:

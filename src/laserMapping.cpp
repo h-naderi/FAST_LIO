@@ -926,7 +926,27 @@ public:
         {
             sub_pcl_pc_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(lid_topic, rclcpp::SensorDataQoS(), standard_pcl_cbk);
         }
-        sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic, 10, imu_cbk);
+        // IMU QoS: BEST_EFFORT + deep queue, mirroring FAST-LIVO2 (LIVMapper.cpp:283).
+        //
+        // Reliability: /imu/data (lowstate_to_imu.py, qos_profile_sensor_data) is
+        // BEST_EFFORT, and `ros2 bag play` replays it with the recorded profile, so a
+        // RELIABLE subscriber matches nothing -- the node runs and never sees an IMU
+        // sample, with only "offering incompatible QoS" as a hint. BEST_EFFORT is
+        // strictly more permissive (DDS matches when offered >= requested), so it also
+        // still receives RELIABLE publishers such as /imu/filtered.
+        //
+        // Depth: this is the parameter that actually governs sample loss, not
+        // reliability. Measured on bag go2_debug_0825_124647 with a 90 ms stall per
+        // 100 ms injected to emulate the ~87 ms LIO frame blocking the executor:
+        //     RELIABLE   depth 2000 -> 19213 msgs   max gap  92 ms
+        //     BEST_EFFORT depth 2000 -> 19200 msgs   max gap  92 ms   (0.07% delta)
+        //     RELIABLE   depth   10 -> 12139 msgs   max gap 128 ms
+        //     BEST_EFFORT depth   10 -> 12118 msgs   max gap 114 ms   (0.17% delta)
+        // Reliability changes nothing; depth 10 drops 37% of the stream. KEEP_LAST
+        // discards the oldest sample on overflow regardless of reliability, so RELIABLE
+        // buys no protection here. 2000 holds ~4 s at the Go2's ~487 Hz.
+        const auto imu_qos = rclcpp::QoS(rclcpp::KeepLast(2000)).best_effort().durability_volatile();
+        sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic, imu_qos, imu_cbk);
         pubLaserCloudFull_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_registered", 20);
         pubLaserCloudFull_body_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_registered_body", 20);
         pubLaserCloudEffect_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_effected", 20);
